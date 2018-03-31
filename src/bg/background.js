@@ -4,10 +4,18 @@
 //     "sample_setting": "This is how you use Store.js to remember values"
 // });
 
-chrome.browserAction.onClicked.addListener(function(tab) {
-    // No tabs or host permissions needed!
-    console.log('Turning ' + tab.url + ' red!');
-    chrome.tabs.executeScript({
-        code: 'document.body.style.backgroundColor="red"'
-    });
+chrome.browserAction.onClicked.addListener(function(activeTab){
+    var newURL = "http://stackoverflow.com/";
+    chrome.tabs.create({ url: newURL });
+});
+
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+        console.log(sender.tab ?
+            "from a content script:" + sender.tab.url :
+            "from the extension");
+        if (request.greeting == "hello") {
+            var newURL = "http://stackoverflow.com/";
+            chrome.tabs.create({url: newURL});
+        }
 });
