@@ -8,23 +8,58 @@ var config = {
     messagingSenderId: "666598580580"
 };
 
+
 firebase.initializeApp(config);
 
-console.log(firebase);
-var speechdb = firebase.database().ref();
+const speechdb = firebase.database().ref(),
+    $window = $(window),
+    $body = $('body, html');
 
 speechdb.on('value', (snapshot) => {
+    let command = snapshot.val();
     console.log(snapshot.val());
+
+    if (command.complete === 0) {
+        switch (command.action) {
+            case 'scroll':
+                makeScroll(command);
+                break;
+        }
+    }
     // chrome.runtime.sendMessage({greeting: "hello"}, function(response) {
     //     console.log(response.farewell);
     // });
+
 });
 
-$('body').on('click', function(){
-    // console.log($().jquery);
-    // // $(window).scrollTop(200);
-    //
-    // chrome.runtime.sendMessage({greeting: "hello"}, function(response) {
-    //     console.log(response.farewell);
-    // });
-});
+function makeScroll(command) {
+    var px = parseInt(command.pixels),
+        currX = $window.scrollLeft(),
+        currY = $window.scrollTop(),
+        y = 0,
+        x = 0;
+
+    switch (command.direction) {
+        case 'down':
+            y = px;
+            break;
+        case 'up':
+            y = -px;
+            break;
+        case 'left':
+            x = -px;
+            break;
+        case 'right':
+            x = px;
+            break;
+    }
+
+    speechdb.update({
+        complete: 1
+    });
+
+    $body.animate({
+        scrollTop: currY + y,
+        scrollLeft: currX + x
+    }, '500');
+}
