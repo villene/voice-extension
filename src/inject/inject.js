@@ -8,11 +8,59 @@ var config = {
     messagingSenderId: "666598580580"
 };
 
-
 firebase.initializeApp(config);
 
-const speechdb = firebase.database().ref(),
-    $window = $(window),
+var speechdb = firebase.database().ref();
+// var provider = new firebase.auth.GoogleAuthProvider();
+// console.log(provider);
+// firebase.auth().signInWithPopup(provider).then(function(result) {
+//     // This gives you a Google Access Token. You can use it to access the Google API.
+//     var token = result.credential.accessToken;
+//     // The signed-in user info.
+//     var user = result.user.userId;
+//     console.log(result.user);
+//     speechdb = firebase.database().ref(user);
+//
+//
+// }).catch(function(error) {
+//     // Handle Errors here.
+//     var errorCode = error.code;
+//     var errorMessage = error.message;
+//     // The email of the user's account used.
+//     var email = error.email;
+//     // The firebase.auth.AuthCredential type that was used.
+//     var credential = error.credential;
+//
+//     console.log(errorCode, errorMessage, email, credential);
+//     // ...
+// });
+
+// firebase.auth().signInWithRedirect(provider);
+// firebase.auth().getRedirectResult().then(function(result) {
+//     if (result.credential) {
+//         // This gives you a Google Access Token. You can use it to access the Google API.
+//         var token = result.credential.accessToken;
+//         // ...
+//     }
+//     // The signed-in user info.
+//     var user = result.user;
+//
+//     console.log(result.user);
+//     speechdb = firebase.database().ref(user);
+// }).catch(function(error) {
+//     // Handle Errors here.
+//     var errorCode = error.code;
+//     var errorMessage = error.message;
+//     // The email of the user's account used.
+//     var email = error.email;
+//     // The firebase.auth.AuthCredential type that was used.
+//     var credential = error.credential;
+//
+//     console.log(errorCode, errorMessage, email, credential);
+//     // ...
+// });
+
+const $window = $(window),
     $body = $('body, html');
 
 speechdb.on('value', (snapshot) => {
@@ -23,6 +71,12 @@ speechdb.on('value', (snapshot) => {
         switch (command.action) {
             case 'scroll':
                 makeScroll(command);
+                break;
+            case 'highlight':
+                highlight(command);
+                break;
+            case 'select':
+                select(command);
                 break;
         }
     }
@@ -62,4 +116,39 @@ function makeScroll(command) {
         scrollTop: currY + y,
         scrollLeft: currX + x
     }, '500');
+}
+
+function highlight (command) {
+    var focusElem = '';
+
+    switch (command.focusable) {
+        case 'all':
+            focusElem = 'input, textarea, button, a, select, option, checkbox, radio';
+            break;
+    }
+
+    console.log($(focusElem));
+
+    speechdb.update({
+        complete: 1
+    });
+
+    $(focusElem).each(function(i) {
+        $(this).append('<div class="s2b-anchor" data-index="'+i+'">'+i+'</div>')
+    });
+}
+
+function select (command) {
+    var number = command.num,
+        el;
+
+    if (number) {
+        el = $('.s2b-anchor[data-index="' + number + '"]').parent();
+        el.addClass('s2b-select');
+    }
+    else {
+
+    }
+
+    $('.s2b-anchor').remove();
 }

@@ -1,0 +1,24 @@
+.s2b-anchor {
+    display: block !important;
+    position: absolute !important;
+    height: 2rem !important;
+    border: 1px solid black !important;
+    background: orange !important;
+    text-align: center !important;
+    line-height: 2rem !important;
+    z-index: 9999 !important;
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    color: black !important;
+}
+
+.s2b-select {
+    border: 2px solid orange !important;
+    animation: border-pulsate 1s infinite;
+}
+
+@keyframes border-pulsate {
+    0%   { border-color: orange; }
+    50%  { border-color: rgba(255, 165, 0, 0); }
+    100% { border-color: orange; }
+}
