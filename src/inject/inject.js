@@ -63,7 +63,7 @@ var speechdb = firebase.database().ref();
 const $window = $(window),
     $body = $('body, html'),
     selectClass = 's2b-select',
-    highlighClass = 's2b-anchor';
+    highlightClass = 's2b-anchor';
 
 let isHighlighted = false;
 
@@ -124,21 +124,66 @@ function makeScroll(command) {
 }
 
 function highlight (command) {
-    var focusElem = '';
+    var focusElem = '',
+        custom = false;
 
     switch (command.focusable) {
         case 'all':
             focusElem = 'input, textarea, button, a, select, option, checkbox, radio';
             break;
+        case 'links':
+            focusElem = 'a';
+            break;
+        case 'input':
+            focusElem = 'input, textarea';
+            break;
+        case 'button':
+            focusElem = 'button';
+            break;
+        case 'select':
+            focusElem = 'select';
+            break;
+        case 'option':
+            focusElem = 'option';
+            break;
+        case 'checkbox':
+            focusElem = 'checkbox';
+            break;
+        case 'radio':
+            focusElem = 'radio';
+            break;
+        case 'paragraph':
+            focusElem = 'p';
+            break;
+        case 'heading':
+            focusElem = 'h1, h2, h3, h4, h5, h6';
+            break;
+        case 'text':
+            focusElem = 'h1, h2, h3, h4, h5, h6, p';
+            break;
+        default:
+            focusElem = command.focusable;
+            custom = true;
+            break;
     }
 
-    console.log($(focusElem));
+    if (custom) {
+        focusElem = $(focusElem + ', *[data-s2b="' + focusElem + '"], .' + focusElem + 'name=' + focusElem);
+    }
+    else {
+        focusElem = $(focusElem);
+    }
+
+    if (focusElem.length === 1) {
+        focusElem.addClass(selectClass);
+    }
+    else {
+        focusElem.each(function(i) {
+            $(this).append('<div class="' + highlightClass + '" data-index="'+i+'">'+i+'</div>')
+        });
+    }
 
     complete(1);
-
-    $(focusElem).each(function(i) {
-        $(this).append('<div class="' + highlighClass + '" data-index="'+i+'">'+i+'</div>')
-    });
 
     isHighlighted = true;
 }
@@ -150,14 +195,14 @@ function select (command, activateAfter) {
     $('.' + selectClass + '').removeClass(selectClass);
 
     if (number) {
-        el = $('.s2b-anchor[data-index="' + number + '"]').parent();
+        el = $('.' + highlightClass + '[data-index="' + number + '"]').parent();
         el.addClass(selectClass);
     }
     else {
 
     }
 
-    $('.s2b-anchor').remove();
+    $('.' + highlightClass).remove();
 
     if (!activateAfter) {
         complete(1);
@@ -165,21 +210,20 @@ function select (command, activateAfter) {
 }
 
 function activate (command) {
-    var number = command.num,
-        name = command.name;
+    var number = command.num;
 
-    if (!isHighlighted && (!number || !name)) {
+    if (!isHighlighted && !number) {
         app.ask('Please select an element first');
         return;
     }
 
-    if (number || name) {
+    if (number) {
         select(command, true);
-        $('.' + selectClass + '')[0].click();
+        $('.' + selectClass)[0].click();
     }
     else {
         // Native JS click used because jQuery trigger is not working
-        $('.' + selectClass + '')[0].click();
+        $('.' + selectClass)[0].click();
     }
 
     complete(1);
