@@ -61,7 +61,11 @@ var speechdb = firebase.database().ref();
 // });
 
 const $window = $(window),
-    $body = $('body, html');
+    $body = $('body, html'),
+    selectClass = 's2b-select',
+    highlighClass = 's2b-anchor';
+
+let isHighlighted = false;
 
 speechdb.on('value', (snapshot) => {
     let command = snapshot.val();
@@ -76,7 +80,10 @@ speechdb.on('value', (snapshot) => {
                 highlight(command);
                 break;
             case 'select':
-                select(command);
+                select(command, false);
+                break;
+            case 'activate':
+                activate(command);
                 break;
         }
     }
@@ -108,9 +115,7 @@ function makeScroll(command) {
             break;
     }
 
-    speechdb.update({
-        complete: 1
-    });
+    complete(1);
 
     $body.animate({
         scrollTop: currY + y,
@@ -129,26 +134,59 @@ function highlight (command) {
 
     console.log($(focusElem));
 
-    speechdb.update({
-        complete: 1
-    });
+    complete(1);
 
     $(focusElem).each(function(i) {
-        $(this).append('<div class="s2b-anchor" data-index="'+i+'">'+i+'</div>')
+        $(this).append('<div class="' + highlighClass + '" data-index="'+i+'">'+i+'</div>')
     });
+
+    isHighlighted = true;
 }
 
-function select (command) {
+function select (command, activateAfter) {
     var number = command.num,
         el;
 
+    $('.' + selectClass + '').removeClass(selectClass);
+
     if (number) {
         el = $('.s2b-anchor[data-index="' + number + '"]').parent();
-        el.addClass('s2b-select');
+        el.addClass(selectClass);
     }
     else {
 
     }
 
     $('.s2b-anchor').remove();
+
+    if (!activateAfter) {
+        complete(1);
+    }
+}
+
+function activate (command) {
+    var number = command.num,
+        name = command.name;
+
+    if (!isHighlighted && (!number || !name)) {
+        app.ask('Please select an element first');
+        return;
+    }
+
+    if (number || name) {
+        select(command, true);
+        $('.' + selectClass + '')[0].click();
+    }
+    else {
+        // Native JS click used because jQuery trigger is not working
+        $('.' + selectClass + '')[0].click();
+    }
+
+    complete(1);
+}
+
+function complete (flag) {
+    speechdb.update({
+        complete: flag
+    });
 }
