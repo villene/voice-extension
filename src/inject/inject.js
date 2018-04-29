@@ -62,6 +62,7 @@ var speechdb = firebase.database().ref();
 
 const $window = $(window),
     $body = $('body, html'),
+    $bodyOnly = $('body'),
     selectClass = 's2b-select',
     highlightClass = 's2b-anchor';
 
@@ -85,6 +86,9 @@ speechdb.on('value', (snapshot) => {
             case 'activate':
                 activate(command);
                 break;
+            case 'write':
+                write(command);
+                break;
         }
     }
     // chrome.runtime.sendMessage({greeting: "hello"}, function(response) {
@@ -97,21 +101,34 @@ function makeScroll(command) {
     var px = parseInt(command.pixels),
         currX = $window.scrollLeft(),
         currY = $window.scrollTop(),
+        defX = $window.innerWidth()/3,
+        defY = $window.innerHeight()/3,
         y = 0,
         x = 0;
 
+    // <0 for page up/page down
+    if (px < 0) {
+        px = $window.innerHeight();
+    }
+
     switch (command.direction) {
         case 'down':
-            y = px;
+            y = px || defY;
             break;
         case 'up':
-            y = -px;
+            y = -px || -defY;
             break;
         case 'left':
-            x = -px;
+            x = -px || defX;
             break;
         case 'right':
-            x = px;
+            x = px || -defX;
+            break;
+        case 'home':
+            y = -currY;
+            break;
+        case 'end':
+            y = $('body').height();
             break;
     }
 
@@ -168,10 +185,10 @@ function highlight (command) {
     }
 
     if (custom) {
-        focusElem = $(focusElem + ', *[data-s2b="' + focusElem + '"], .' + focusElem + 'name=' + focusElem);
+        focusElem = $(focusElem + ', *[data-s2b="' + focusElem + '"], .' + focusElem + ' [name="' + focusElem + '"]').filter(':visible');
     }
     else {
-        focusElem = $(focusElem);
+        focusElem = $(focusElem).filter(':visible');
     }
 
     if (focusElem.length === 1) {
@@ -179,7 +196,15 @@ function highlight (command) {
     }
     else {
         focusElem.each(function(i) {
-            $(this).append('<div class="' + highlightClass + '" data-index="'+i+'">'+i+'</div>')
+            var offset = $(this).offset();
+
+            $(this).attr('data-s2b-index', i);
+
+            $bodyOnly.append('<div class="'
+                + highlightClass
+                + '" style="top:' + offset.top + 'px; left:' + offset.left + 'px">'
+                + i
+                +'</div>')
         });
     }
 
@@ -195,11 +220,8 @@ function select (command, activateAfter) {
     $('.' + selectClass + '').removeClass(selectClass);
 
     if (number) {
-        el = $('.' + highlightClass + '[data-index="' + number + '"]').parent();
+        el = $('[data-s2b-index="' + number + '"]');
         el.addClass(selectClass);
-    }
-    else {
-
     }
 
     $('.' + highlightClass).remove();
@@ -227,6 +249,24 @@ function activate (command) {
     }
 
     complete(1);
+}
+
+function write (command) {
+    var text = command.text,
+        currText = "",
+        activeEl = $('input[type="text"].' + selectClass + ', textarea.' + selectClass + ', :focus');
+
+    if (!activeEl.length) {
+        speechdb.update({
+            hasInput: 0,
+            complete: 1
+        });
+
+        return;
+    }
+
+    currText = activeEl.val() + ' ' + text;
+    activeEl.val(currText);
 }
 
 function complete (flag) {
