@@ -64,7 +64,8 @@ const $window = $(window),
     $body = $('body, html'),
     $bodyOnly = $('body'),
     selectClass = 's2b-select',
-    highlightClass = 's2b-anchor';
+    highlightClass = 's2b-anchor',
+    synth = window.speechSynthesis;
 
 let isHighlighted = false;
 
@@ -88,6 +89,9 @@ speechdb.on('value', (snapshot) => {
                 break;
             case 'write':
                 write(command);
+                break;
+            case 'read':
+                read(command);
                 break;
         }
     }
@@ -197,7 +201,7 @@ function highlight (command) {
     else {
         focusElem.each(function(i) {
             var offset = $(this).offset();
-
+            i++;
             $(this).attr('data-s2b-index', i);
 
             $bodyOnly.append('<div class="'
@@ -267,6 +271,30 @@ function write (command) {
 
     currText = activeEl.val() + ' ' + text;
     activeEl.val(currText);
+}
+
+function read (command) {
+    var number = command.num,
+        text = '',
+        speech;
+
+    if (!isHighlighted && !number) {
+        app.ask('Please select an element first');
+        return;
+    }
+    else {
+        if (number) {
+            select(command, true);
+        }
+
+        text = $('.' + selectClass).val() || $('.' + selectClass).text();
+console.log(text);
+        speech = new SpeechSynthesisUtterance(text);
+
+        synth.speak(speech);
+    }
+
+    complete(1);
 }
 
 function complete (flag) {
