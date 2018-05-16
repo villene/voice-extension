@@ -11,54 +11,6 @@ var config = {
 firebase.initializeApp(config);
 
 var speechdb = firebase.database().ref();
-// var provider = new firebase.auth.GoogleAuthProvider();
-// console.log(provider);
-// firebase.auth().signInWithPopup(provider).then(function(result) {
-//     // This gives you a Google Access Token. You can use it to access the Google API.
-//     var token = result.credential.accessToken;
-//     // The signed-in user info.
-//     var user = result.user.userId;
-//     console.log(result.user);
-//     speechdb = firebase.database().ref(user);
-//
-//
-// }).catch(function(error) {
-//     // Handle Errors here.
-//     var errorCode = error.code;
-//     var errorMessage = error.message;
-//     // The email of the user's account used.
-//     var email = error.email;
-//     // The firebase.auth.AuthCredential type that was used.
-//     var credential = error.credential;
-//
-//     console.log(errorCode, errorMessage, email, credential);
-//     // ...
-// });
-
-// firebase.auth().signInWithRedirect(provider);
-// firebase.auth().getRedirectResult().then(function(result) {
-//     if (result.credential) {
-//         // This gives you a Google Access Token. You can use it to access the Google API.
-//         var token = result.credential.accessToken;
-//         // ...
-//     }
-//     // The signed-in user info.
-//     var user = result.user;
-//
-//     console.log(result.user);
-//     speechdb = firebase.database().ref(user);
-// }).catch(function(error) {
-//     // Handle Errors here.
-//     var errorCode = error.code;
-//     var errorMessage = error.message;
-//     // The email of the user's account used.
-//     var email = error.email;
-//     // The firebase.auth.AuthCredential type that was used.
-//     var credential = error.credential;
-//
-//     console.log(errorCode, errorMessage, email, credential);
-//     // ...
-// });
 
 const $window = $(window),
     $body = $('body, html'),
@@ -95,10 +47,6 @@ speechdb.on('value', (snapshot) => {
                 break;
         }
     }
-    // chrome.runtime.sendMessage({greeting: "hello"}, function(response) {
-    //     console.log(response.farewell);
-    // });
-
 });
 
 function makeScroll(command) {
@@ -132,8 +80,10 @@ function makeScroll(command) {
             y = -currY;
             break;
         case 'end':
-            y = $('body').height();
+            y = $bodyOnly.height();
             break;
+        default:
+            complete(0);
     }
 
     complete(1);
@@ -188,6 +138,8 @@ function highlight (command) {
             break;
     }
 
+    $('.' + highlightClass).remove();
+
     if (custom) {
         focusElem = $(focusElem + ', *[data-s2b="' + focusElem + '"], .' + focusElem + ' [name="' + focusElem + '"]').filter(':visible');
     }
@@ -239,7 +191,10 @@ function activate (command) {
     var number = command.num;
 
     if (!isHighlighted && !number) {
-        app.ask('Please select an element first');
+        speechdb.update({
+            hasElement: 0,
+            complete: 1
+        });
         return;
     }
 
@@ -271,6 +226,8 @@ function write (command) {
 
     currText = activeEl.val() + ' ' + text;
     activeEl.val(currText);
+
+    complete(1);
 }
 
 function read (command) {
@@ -279,7 +236,10 @@ function read (command) {
         speech;
 
     if (!isHighlighted && !number) {
-        app.ask('Please select an element first');
+        speechdb.update({
+            hasElement: 0,
+            complete: 1
+        });
         return;
     }
     else {
@@ -288,7 +248,6 @@ function read (command) {
         }
 
         text = $('.' + selectClass).val() || $('.' + selectClass).text();
-console.log(text);
         speech = new SpeechSynthesisUtterance(text);
 
         synth.speak(speech);
