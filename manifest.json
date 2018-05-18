@@ -1,24 +1,14 @@
 {
-  "name": "Browser voice control",
-  "version": "0.0.1",
+  "name": "Speech2Browser",
+  "version": "0.1",
   "manifest_version": 2,
-  "description": "Ditto",
+  "description": "Extension for controlling your web pages with voice. Requires Google Assistant.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
   "default_locale": "en",
-  "background": {
-    "scripts": [
-      "src/bg/background.js"
-    ],
-    "persistent": false
-  },
-  "options_page": "src/options_custom/index.html",
-  "browser_action": {
-    "default_icon": "icons/icon19.png"
-  },
   "permissions": [
     "activeTab",
     "bookmarks",
